@@ -285,6 +285,7 @@ class ProxyApplication(object):
             if '/app/attendance/js/sign_ec.js' in url:
                 # url = '/app/attendance/js/sign_ec.js?'+str(random.randint(0, 9999))
                 # headers['If-None-Match'] = 'W/"10040-1502791023965"'
+                log.info('Respone for %s' % url)
                 for header in headers:
                     if 'Cache-Control' in header:
                         headers.remove(header)
