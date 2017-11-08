@@ -1,9 +1,9 @@
 import logging
-from urlparse import urlparse
+from urllib.parse import urlparse
 import re
 
-from server import HTTPProxyServer, ProxyApplication, get_destination
-from socks_relay import HTTP2SocksProxyApplication
+from .server import HTTPProxyServer, ProxyApplication, get_destination
+from .socks_relay import HTTP2SocksProxyApplication
 from gsocks.smart_relay import RESocksMatcher, ForwardDestination
 
 log = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class HTTP2SocksSmartApplication(ProxyApplication):
     def application(self, environ, start_response):
         try:
             host, port = get_destination(environ)
-        except Exception, e:
+        except Exception as e:
             log.error("[Exception][http]: %s" % str(e))
             start_response("400 Bad Request", [("Content-Type", "text/plain; charset=utf-8")])
             return ["Bad Request"]
@@ -51,7 +51,7 @@ class HTTP2SocksSmartApplication(ProxyApplication):
                 return super(HTTP2SocksSmartApplication, self).application(environ, start_response)
             else:
                 return self.forward(scheme, host, port, environ, start_response) 
-        except Exception, e:
+        except Exception as e:
             log.error("[Exception][application]: %s" % str(e))
             start_response("500 Internal Server Error", [("Content-Type", "text/plain; charset=utf-8")])
             return ["Internal Server Error"]

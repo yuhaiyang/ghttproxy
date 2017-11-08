@@ -1,10 +1,10 @@
 import logging
-import urlparse
-from httplib import HTTPConnection
+import urllib.parse
+from http.client import HTTPConnection
 
 from gevent import socket
 
-from server import HTTPProxyServer, ProxyApplication, \
+from .server import HTTPProxyServer, ProxyApplication, \
 copy_request, CHUNKSIZE, get_destination, set_forwarded_for
 from gsocks import utils as socksutils
 from gsocks import msg as socksmsg
@@ -33,7 +33,7 @@ class HTTP2SocksProxyApplication(ProxyApplication):
                 socksconn.close()
                 return None
             return socksconn
-        except Exception, e:
+        except Exception as e:
             log.error("[Exception][connect_socks]: %s" % str(e))
             if socksconn:
                 socksconn.close()
@@ -42,7 +42,7 @@ class HTTP2SocksProxyApplication(ProxyApplication):
     def tunnel(self, environ, start_response):
         try:
             host, port = get_destination(environ)
-        except Exception, e:
+        except Exception as e:
             log.error("[Exception][tunnel]: %s" % str(e))
             start_response("400 Bad Request", [("Content-Type", "text/plain; charset=utf-8")])
             return ["Bad Request"]
@@ -60,7 +60,7 @@ class HTTP2SocksProxyApplication(ProxyApplication):
         try:
             method, url, body, headers = copy_request(environ)
             host, port = get_destination(environ)
-        except Exception, e:
+        except Exception as e:
             log.error("[Exception][http]: %s" % str(e))
             start_response("400 Bad Request", [("Content-Type", "text/plain; charset=utf-8")])
             yield "Bad Request"
@@ -76,8 +76,8 @@ class HTTP2SocksProxyApplication(ProxyApplication):
             conn = HTTPConnection(host, port=port)
             conn.sock = socksconn
             set_forwarded_for(environ, headers)
-            u = urlparse.urlsplit(url)
-            path = urlparse.urlunsplit(("", "", u.path, u.query, ""))
+            u = urllib.parse.urlsplit(url)
+            path = urllib.parse.urlunsplit(("", "", u.path, u.query, ""))
             conn.request(method, path, body, headers)
             resp = conn.getresponse()
             start_response("%d %s" % (resp.status, resp.reason), resp.getheaders())
@@ -87,7 +87,7 @@ class HTTP2SocksProxyApplication(ProxyApplication):
                     break
                 yield data
             conn.close()
-        except Exception, e:
+        except Exception as e:
             log.error("[Exception][http]: %s" % str(e))
             start_response("500 Internal Server Error", [("Content-Type", "text/plain; charset=utf-8")])
             yield "Internal Server Error"
