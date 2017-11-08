@@ -3,7 +3,7 @@ import urllib.parse
 import time
 import re
 from http.client import HTTPConnection
-
+import sys
 import random
 import json
 
@@ -299,7 +299,7 @@ class ProxyApplication(object):
                     break
                 if '/app/attendance/js/sign_ec.js' in url:
                     data = bytes.decode(data)
-                    with open("config.json", 'r') as load_f:
+                    with open(sys.path[0]+"/config.json", 'r') as load_f:
                         load_dict = json.load(load_f)
                     # lng = float('%s%d' % (load_dict['lng'], random.randint(0, 999)))
                     # lat = float('%s%d' % (load_dict['lat'], random.randint(0, 999)))
@@ -395,5 +395,6 @@ if __name__ == '__main__':
         format='[%(asctime)s][%(name)s][%(levelname)s] - %(message)s',
         datefmt='%Y-%d-%m %H:%M:%S',
         level=logging.DEBUG, )
+    #print(os.getcwd())
     print("Listening 0.0.0.0:", 65535)
     HTTPProxyServer("0.0.0.0", 65535, ProxyApplication()).run()
