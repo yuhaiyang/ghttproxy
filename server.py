@@ -4,7 +4,6 @@ import time
 import re
 from http.client import HTTPConnection
 import sys
-import random
 import json
 
 import gevent
@@ -202,7 +201,7 @@ def copy_request(environ):
         headers.append((key.strip(), value.strip()))
     headers.append(("Connection", "Keep-Alive"))
     headers = dict(headers)
-    #if url == 'http://oa.hillstonenet.com:8088/wxclient/app/attendance/addForEc':
+    # if url == 'http://oa.hillstonenet.com:8088/wxclient/app/attendance/addForEc':
     #    if method == 'POST':
     #        request_body = bytes.decode(environ["wsgi.input"].read(int(content_length)))
     #        log.info(request_body)
@@ -233,16 +232,19 @@ class ProxyApplication(object):
             method, url, body, headers = copy_request(environ)
             if 'wxclient/app/attendance/addForEc' in url:
                 if method == 'POST':
-                    body = u'{"signTime":"2017-11-08 14:15:28","success":false,"msg":"温馨提示:请先断开代理服务器","btnType":"2"}'
-                    status = '200 OK'
-                    response_headers = [('Content-Type', 'application/json;charset=UTF-8'), ('Content-Length', str(len(str.encode(body))))]
-                    start_response(status, response_headers)
-                    yield str.encode(body)
-                    return
+                    headers['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0_3 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Mobile/15A432 MicroMessenger/6.5.21 NetType/WIFI Language/zh_CN'
+                    # body = u'{"signTime":"2017-11-08 14:15:28","success":false,"msg":"温馨提示:请先断开代理服务器","btnType":"2"}'
+                    # status = '200 OK'
+                    # response_headers = [('Content-Type',
+                    #                      'application/json;charset=UTF-8'),
+                    #                     ('Content-Length',
+                    #                      str(len(str.encode(body))))]
+                    # start_response(status, response_headers)
+                    # yield str.encode(body)
+                    # return
         except Exception as e:
             log.error("[Exception][http 400]: %s" % str(e))
-            start_response("400 Bad Request", [("Content-Type",
-                                                "text/plain; charset=utf-8")])
+            start_response("400 Bad Request", [("Content-Type", "text/plain; charset=utf-8")])
             yield "Bad Request"
             return
 
@@ -255,30 +257,34 @@ class ProxyApplication(object):
             conn.sock = http_conn
             if '/app/attendance/js/sign_ec.js' in url:
                 # url = '/app/attendance/js/sign_ec.js?'+str(random.randint(0, 9999))
-                #headers['If-None-Match'] = 'W/"10040-1502791023965"'
-                print(url)
+                # headers['If-None-Match'] = 'W/"10040-1502791023965"'
+                print('**********', url, '**********')
+                with open(sys.path[0] + "/sign_ec.js", 'rb') as sign_ec_js:
+                    data = sign_ec_js.read()
+                status = '200 OK'
+                response_headers = [('X-Frame-Options', 'SAMEORIGIN'),
+                                    ('Accept-Ranges', 'bytes'),
+                                    ('Cache-Control', 'public, max-age=31536000'),
+                                    ('Content-Type', 'application/javascript'),
+                                    ('Date', 'Thu,  09 Nov 2017 05:54:54 GMT'),
+                                    ('ETag', 'W/"10040-1502791023964"'),
+                                    ('Last-Modified', 'Tue,  15 Aug 2017 09:57:03 GMT'),
+                                    ('Server', 'Apache-Coyote/1.1'),
+                                    ('Content-Length', str(len(data)))]
+                start_response(status, response_headers)
+                yield data
+                conn.close()
+                return
 
             u = urllib.parse.urlsplit(url)
             path = urllib.parse.urlunsplit(("", "", u.path, u.query, ""))
             # Host header put by conn.request
             conn.request(method, path, body, headers)
             resp = conn.getresponse()
-
-            # start_response("%d %s" % (resp.status, resp.reason), resp.getheaders())
-            # while True:
-            #     data = resp.read(CHUNKSIZE)
-            #     if not data:
-            #         break
-            #     yield data
-
             headers = resp.getheaders()
             for header in headers:
                 if 'Content-Length' in header:
                     headers.remove(header)
-
-            # lenths = len(data)
-            # conten_lenth = ('Content-Length', str(lenths))
-            # headers.append(conten_lenth)
 
             chunked_encoding = ('Transfer-Encoding', 'chunked')
             headers.append(chunked_encoding)
@@ -300,15 +306,15 @@ class ProxyApplication(object):
                     break
                 if '/app/attendance/js/sign_ec.js' in url:
                     data = bytes.decode(data)
-                    with open(sys.path[0]+"/config.json", 'r') as load_f:
+                    with open(sys.path[0] + "/config.json", 'r') as load_f:
                         load_dict = json.load(load_f)
                     # lng = float('%s%d' % (load_dict['lng'], random.randint(0, 999)))
                     # lat = float('%s%d' % (load_dict['lat'], random.randint(0, 999)))
                     # print(lng, ',', lat)
                     data = re.sub(
                         r'setLngLat\(lng, lat\) {',
-                        'setLngLat(lng, lat) {\n\tlng=%s+Math.random()*1000/1000000;\n\tlat=%s+Math.random()*1000/1000000;\n' % (load_dict['lng'], load_dict['lat']),
-                        data)
+                        'setLngLat(lng, lat) {\n\tlng=%s+Math.random()*1000/1000000;\n\tlat=%s+Math.random()*1000/1000000;\n'
+                        % (load_dict['lng'], load_dict['lat']), data)
                     data = re.sub(r'定位点', '牛X的定位点', data)
                     ''' data = re.sub(r'longitude = position.coords.longitude;',
                                   'longitude = 116.404731;', data)
