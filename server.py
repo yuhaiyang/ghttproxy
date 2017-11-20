@@ -233,15 +233,15 @@ class ProxyApplication(object):
             if 'wxclient/app/attendance/addForEc' in url:
                 if method == 'POST':
                     headers['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0_3 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Mobile/15A432 MicroMessenger/6.5.21 NetType/WIFI Language/zh_CN'
-                    # body = u'{"signTime":"2017-11-08 14:15:28","success":false,"msg":"温馨提示:请先断开代理服务器","btnType":"2"}'
-                    # status = '200 OK'
-                    # response_headers = [('Content-Type',
-                    #                      'application/json;charset=UTF-8'),
-                    #                     ('Content-Length',
-                    #                      str(len(str.encode(body))))]
-                    # start_response(status, response_headers)
-                    # yield str.encode(body)
-                    # return
+                    body = u'{"signTime":"2017-11-08 14:15:28","success":false,"msg":"温馨提示:您的地理位置距离签到地点超过最小签到范围限制的500米","btnType":"2"}'
+                    status = '200 OK'
+                    response_headers = [('Content-Type',
+                                         'application/json;charset=UTF-8'),
+                                        ('Content-Length',
+                                         str(len(str.encode(body))))]
+                    start_response(status, response_headers)
+                    yield str.encode(body)
+                    return
         except Exception as e:
             log.error("[Exception][http 400]: %s" % str(e))
             start_response("400 Bad Request", [("Content-Type", "text/plain; charset=utf-8")])
